@@ -27,6 +27,6 @@ export const NOTES: NoteDefinition[] = [
 ];
 
 export const NOTE_COLORS: Record<NoteType, string> = {
-  low: "bg-amber-500 border-amber-300",
-  high: "bg-amber-500 border-amber-300",
+  low: "bg-amber-700 border-amber-300",
+  high: "bg-yellow-600 border-yellow-300",
 };

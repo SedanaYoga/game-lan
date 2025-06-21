@@ -6,6 +6,7 @@ import {
   TimelineNote,
 } from "@/types/notes.type";
 import { Dispatch, SetStateAction } from "react";
+import { twMerge } from "tailwind-merge";
 
 interface TimelineWrapperProps {
   timelines: Timeline[];
@@ -115,6 +116,12 @@ const TimelineWrapper = ({
     e.dataTransfer.setData("application/json", JSON.stringify(item));
   };
 
+  const removeTimeline = (timelineId: string) => {
+    setTimelines((currentTimelines) => {
+      return currentTimelines.filter((tl) => tl.id !== timelineId);
+    });
+  };
+
   return (
     <section className="bg-gray-800 rounded-lg p-4 flex-grow flex flex-col overflow-hidden">
       <div className="overflow-x-auto w-full h-full relative">
@@ -154,10 +161,19 @@ const TimelineWrapper = ({
                 onDragOver={(e) => {
                   e.preventDefault();
                 }}
-                className={`sticky left-0 bg-gray-800 p-2 h-full flex justify-between items-center rounded-lg border-2 transition-colors ${activeTimelineId === tl.id ? "bg-gray-700 border-cyan-500" : "bg-gray-900/50 border-transparent"}`}
+                className={twMerge(
+                  ...[
+                    "sticky left-0 p-2 h-full flex flex-col justify-between items-start gap-2",
+                    "bg-gray-800 rounded-lg border-2 transition-colors",
+                    activeTimelineId === tl.id
+                      ? "bg-gray-700 border-cyan-500"
+                      : "bg-gray-900/50 border-transparent",
+                  ],
+                )}
                 style={{ zIndex: 10 }}
               >
                 <h3 className="font-bold">Timeline {index + 1}</h3>
+
                 <div className="flex gap-2 items-center">
                   {activeTimelineId !== tl.id ? (
                     <button
@@ -176,6 +192,13 @@ const TimelineWrapper = ({
                     className="px-2 py-1 text-xs bg-red-800 hover:bg-red-700 rounded-md"
                   >
                     Clear
+                  </button>
+
+                  <button
+                    onClick={() => removeTimeline(tl.id)}
+                    className="px-2 py-1 text-xs bg-red-800 hover:bg-red-700 rounded-md"
+                  >
+                    Remove
                   </button>
                 </div>
               </div>

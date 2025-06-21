@@ -1,4 +1,5 @@
 import { NOTE_COLORS, NOTES } from "@/constants/notes";
+import { twMerge } from "tailwind-merge";
 import {
   gilakPembukaTimelines,
   gilakPenutupTimelines,
@@ -115,7 +116,6 @@ const NoteWrapper = ({
           const timelineNotes = selectedTimeline?.notes;
           if (!timelineNotes?.length || !timelineNotes.at(-1)?.id) return;
           handleRemoveNote(activeTimelineId, timelineNotes.at(-1)!.id);
-          console.log(timelines);
         }
       }
     };
@@ -148,21 +148,35 @@ const NoteWrapper = ({
         <h2 className="text-xl font-bold flex-shrink-0">Gamelan Bali Gangsa</h2>
       </div>
 
-      <div className="flex flex-row items-center gap-3">
+      <div className="flex flex-row items-center gap-3 text-sm">
         <button onClick={useSelisir}>Selisir</button>
         <button onClick={useGilakPembuka}>Gilak Pembuka</button>
         <button onClick={useGilakPenutup}>Gilak Penutup</button>
       </div>
 
-      <div className="flex flex-row items-center justify-center h-64 gap-2">
+      <div
+        className={twMerge(
+          ...[
+            "flex flex-col items-center justify-center w-full gap-5",
+            "sm:flex-row sm:h-64 sm:gap-2 md:w-[700px] sm:w-[500px]",
+          ],
+        )}
+      >
         <div
           draggable="true"
           onDragStart={(e) => handleDragStart(e, { type: "rest" })}
           onClick={() => handlePaletteClick({ type: "rest" })}
-          className="flex flex-col items-center py-3 h-full min-w-24 rounded-md border border-white bg-gray-100 dark:text-gray-950 font-bold"
+          className={twMerge(
+            ...[
+              "flex flex-col items-center py-3 w-full rounded-md text-xs h-full",
+              "transition-all ease-out",
+              "bg-white border-white text-black",
+              "sm:text-sm",
+            ],
+          )}
           role="button"
         >
-          Silence
+          <span className={`font-bold text-black`}>Silence</span>
         </div>
 
         {NOTES.map((note, index) => (
@@ -173,19 +187,25 @@ const NoteWrapper = ({
             onClick={() => handlePaletteClick(note)}
             style={{ height: `${100 - index * 3}%` }}
             role="button"
-            className={`flex flex-col items-center py-3 min-w-24 w-fit rounded-md
-${hitNote === note.pitch ? "bg-white border-white" : NOTE_COLORS[note.type]}
-transition-all ease-out
-`}
+            className={twMerge(
+              ...[
+                "flex flex-col items-center py-3 w-full rounded-md text-xs",
+                "transition-all ease-out",
+                hitNote === note.pitch
+                  ? "bg-white border-white"
+                  : NOTE_COLORS[note.type],
+                "sm:text-sm",
+              ],
+            )}
           >
             <span
-              className={`font-bold text-sm md:text-base ${hitNote === note.pitch ? "text-black" : ""}`}
+              className={`font-bold ${hitNote === note.pitch ? "text-black" : ""}`}
             >
               {note.name}
             </span>
 
             <span
-              className={`text-xs opacity-80 hidden md:block ${hitNote === note.pitch ? "text-black" : ""}`}
+              className={`opacity-80 md:block ${hitNote === note.pitch ? "text-black" : "text-white"}`}
             >
               {note.type}
             </span>

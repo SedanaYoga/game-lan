@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { twMerge } from "tailwind-merge";
 import * as Tone from "tone";
 import { Time } from "tone/build/esm/core/type/Units";
 
@@ -176,7 +177,14 @@ const ConfigWrapper = ({
   }, [tempo]);
 
   return (
-    <section className="flex flex-row items-center bg-gray-800 rounded-lg p-4 gap-4">
+    <section
+      className={twMerge(
+        ...[
+          "flex flex-col items-center bg-gray-800 rounded-lg p-4 gap-4",
+          "sm:flex-row",
+        ],
+      )}
+    >
       <div className="flex items-center gap-4 w-full">
         <button
           onClick={handlePlayStop}
@@ -209,14 +217,17 @@ const ConfigWrapper = ({
         </div>
       </div>
 
-      <div className="flex flex-row items-center">
-        <button
-          onClick={handleAddTimeline}
-          className="bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 rounded-lg transition-colors p-3 shrink-0"
-        >
-          New Timeline
-        </button>
-      </div>
+      <button
+        onClick={handleAddTimeline}
+        className={twMerge(
+          ...[
+            "bg-indigo-600 hover:bg-indigo-500 font-semibold py-3 rounded-lg transition-colors p-3 shrink-0 w-full",
+            "sm:w-fit",
+          ],
+        )}
+      >
+        New Timeline
+      </button>
     </section>
   );
 };
