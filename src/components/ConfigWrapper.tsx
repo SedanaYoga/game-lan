@@ -16,10 +16,10 @@ interface ConfigWrapperProps {
   setIsPlaying: Dispatch<SetStateAction<boolean>>;
   setCurrentStep: Dispatch<SetStateAction<number>>;
   timelines: Timeline[];
-  synthRefA: RefObject<Tone.PolySynth<Tone.Synth<Tone.SynthOptions>> | null>;
-  synthRefB: RefObject<Tone.PolySynth<Tone.Synth<Tone.SynthOptions>> | null>;
   setTimelines: Dispatch<SetStateAction<Timeline[]>>;
   setActiveTimelineId: Dispatch<SetStateAction<string | null>>;
+  samplerRef: RefObject<Tone.Sampler | null>;
+  isSamplerReady: boolean;
 }
 
 const ConfigWrapper = ({
@@ -27,16 +27,17 @@ const ConfigWrapper = ({
   setIsPlaying,
   setCurrentStep,
   timelines,
-  synthRefA,
-  synthRefB,
   setTimelines,
   setActiveTimelineId,
+  samplerRef,
+  isSamplerReady,
 }: ConfigWrapperProps) => {
   const partPlayersRef = useRef<(Tone.Part | Tone.Loop)[]>([]);
   const [tempo, setTempo] = useState<number>(120);
   const [isLooping, setIsLooping] = useState<boolean>(false);
 
   const handlePlayStop = useCallback(async () => {
+    if (!isSamplerReady) return;
     if (Tone.getContext().state !== "running") await Tone.start();
     const transport = Tone.getTransport();
     const draw = Tone.getDraw();
@@ -54,13 +55,62 @@ const ConfigWrapper = ({
     transport.position = 0;
 
     partPlayersRef.current = timelines.map((timeline) => {
-      const events = timeline.notes
-        .filter((note): note is TimelineNote => note.type !== "rest")
-        .map((note) => [note.time, note.pitch] as [string, string]);
-      return new Tone.Part((time, pitch) => {
-        synthRefA.current?.triggerAttackRelease(pitch, "8n", time);
-        synthRefB.current?.triggerAttackRelease(pitch, "8n", time);
-      }, events).start(0);
+      const eventsWithDuration: {
+        time: string;
+        pitch: string;
+        duration: number | string;
+      }[] = [];
+
+      for (let i = 0; i < timeline.notes.length; i++) {
+        const currentItem = timeline.notes[i];
+        if (currentItem.type === "rest") {
+          continue;
+        }
+
+        // Find the next actual note to determine the duration
+        let nextNoteIndex = -1;
+        for (let j = i + 1; j < timeline.notes.length; j++) {
+          if (timeline.notes[j].type !== "rest") {
+            nextNoteIndex = j;
+            break;
+          }
+        }
+
+        let duration: number | string;
+        if (nextNoteIndex !== -1) {
+          const stepsBetween = nextNoteIndex - i;
+          if (tempo < 180) {
+            duration = Tone.Time("20n").toSeconds() * stepsBetween;
+          } else if (tempo >= 180) {
+            duration = Tone.Time("24n").toSeconds() * stepsBetween;
+          } else {
+            duration = Tone.Time("48n").toSeconds() * stepsBetween;
+          }
+        } else {
+          // Default duration for the last note in the sequence
+          duration = "8n";
+        }
+
+        eventsWithDuration.push({
+          time: currentItem.time,
+          pitch: (currentItem as TimelineNote).pitch,
+          duration,
+        });
+      }
+
+      return new Tone.Part((time, value) => {
+        samplerRef.current?.triggerAttackRelease(
+          value.pitch,
+          value.duration,
+          time,
+        );
+      }, eventsWithDuration).start(0);
+      // const events = timeline.notes
+      //   .filter((note): note is TimelineNote => note.type !== "rest")
+      //   .map((note) => [note.time, note.pitch] as [string, string]);
+      // return new Tone.Part((time, pitch) => {
+      //   samplerRef.current?.triggerAttackRelease(pitch, "2n", time);
+      // }, events).start(0);
     });
 
     const stepLoop = new Tone.Loop((time) => {
@@ -106,10 +156,11 @@ const ConfigWrapper = ({
   }, [
     isLooping,
     isPlaying,
+    isSamplerReady,
+    samplerRef,
     setCurrentStep,
     setIsPlaying,
-    synthRefA,
-    synthRefB,
+    tempo,
     timelines,
   ]);
 

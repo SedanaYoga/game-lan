@@ -3,6 +3,7 @@
 import ConfigWrapper from "@/components/ConfigWrapper";
 import NoteWrapper from "@/components/NoteWrapper";
 import TimelineWrapper from "@/components/TimelineWrapper";
+import { SAMPLER_URLS } from "@/constants/notes";
 import { gilakPembukaTimelines } from "@/data/test";
 import {
   DraggedItem,
@@ -24,8 +25,8 @@ export default function Home() {
   const [currentStep, setCurrentStep] = useState<number>(-1);
   const [draggedItem, setDraggedItem] = useState<DraggedItem | null>(null);
 
-  const synthRefA = useRef<Tone.PolySynth | null>(null);
-  const synthRefB = useRef<Tone.PolySynth | null>(null);
+  const samplerRef = useRef<Tone.Sampler | null>(null);
+  const [isSamplerReady, setIsSamplerReady] = useState<boolean>(false);
 
   const addToTimeline = (
     item: NoteDefinition | { type: "rest" },
@@ -67,38 +68,27 @@ export default function Home() {
   };
 
   // --- Effects ---
-  // Initialize Synthesizers
+  // Initialize Sampler
   useEffect(() => {
-    const settings: Partial<Tone.FMSynthOptions> = {
-      harmonicity: 3.99,
-      modulationIndex: 15,
-      envelope: {
-        attack: 0.001,
-        decay: 1.4,
-        sustain: 0.05,
-        release: 1.4,
-      } as Omit<Tone.EnvelopeOptions, keyof Tone.ToneAudioNodeOptions>,
-      modulationEnvelope: {
-        attack: 0.002,
-        decay: 0.7,
-        sustain: 0,
-        release: 0.7,
-      } as Omit<Tone.EnvelopeOptions, keyof Tone.ToneAudioNodeOptions>,
-    };
+    samplerRef.current = new Tone.Sampler({
+      urls: SAMPLER_URLS,
+      onload: () => {
+        setIsSamplerReady(true);
+        console.log("Sampler is loaded successfully!");
+      },
+      onerror: (error) => {
+        console.error("Error loading samples:", error);
+        alert(
+          "Could not load the audio samples. Please check the file paths and make sure they are accessible in your public folder.",
+        );
+      },
+    }).toDestination();
 
-    const chorus = new Tone.Chorus(4, 2.5, 0.5).toDestination().start();
-    synthRefA.current = new Tone.PolySynth(Tone.FMSynth, settings).connect(
-      new Tone.Panner(-0.2).connect(chorus),
-    );
-    synthRefA.current.set({ detune: -5 });
-    synthRefB.current = new Tone.PolySynth(Tone.FMSynth, settings).connect(
-      new Tone.Panner(0.2).connect(chorus),
-    );
-    synthRefB.current.set({ detune: 5 });
+    const chorus = new Tone.Chorus(2, 1.5, 0.5).toDestination();
+    samplerRef.current.connect(chorus);
 
     return () => {
-      synthRefA.current?.dispose();
-      synthRefB.current?.dispose();
+      samplerRef.current?.dispose();
       chorus.dispose();
     };
   }, []);
@@ -116,8 +106,8 @@ export default function Home() {
         setDraggedItem={setDraggedItem}
         activeTimelineId={activeTimelineId}
         addToTimeline={addToTimeline}
-        synthRefA={synthRefA}
-        synthRefB={synthRefB}
+        samplerRef={samplerRef}
+        isSamplerReady={isSamplerReady}
         handleRemoveNote={handleRemoveNote}
         timelines={timelines}
         setTimelines={setTimelines}
@@ -129,8 +119,8 @@ export default function Home() {
           setIsPlaying={setIsPlaying}
           setCurrentStep={setCurrentStep}
           timelines={timelines}
-          synthRefA={synthRefA}
-          synthRefB={synthRefB}
+          samplerRef={samplerRef}
+          isSamplerReady={isSamplerReady}
           setTimelines={setTimelines}
           setActiveTimelineId={setActiveTimelineId}
         />

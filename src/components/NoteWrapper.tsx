@@ -11,6 +11,7 @@ import {
   SetStateAction,
   useCallback,
   useEffect,
+  useState,
 } from "react";
 import * as Tone from "tone";
 
@@ -21,23 +22,24 @@ interface NoteWrapperProps {
     item: NoteDefinition | { type: "rest" },
     timelineId: string,
   ) => void;
-  synthRefA: RefObject<Tone.PolySynth<Tone.Synth<Tone.SynthOptions>> | null>;
-  synthRefB: RefObject<Tone.PolySynth<Tone.Synth<Tone.SynthOptions>> | null>;
   handleRemoveNote: (timelineId: string, noteId: string) => void;
   timelines: Timeline[];
   setTimelines: Dispatch<SetStateAction<Timeline[]>>;
+  samplerRef: RefObject<Tone.Sampler | null>;
+  isSamplerReady: boolean;
 }
 
 const NoteWrapper = ({
   setDraggedItem,
   activeTimelineId,
   addToTimeline,
-  synthRefA,
-  synthRefB,
   handleRemoveNote,
   timelines,
   setTimelines,
+  samplerRef,
+  isSamplerReady,
 }: NoteWrapperProps) => {
+  const [hitNote, setHitNote] = useState<string | null>(null);
   const handleDragStart = (
     e: React.DragEvent,
     item: NoteDefinition | { type: "rest" },
@@ -53,18 +55,29 @@ const NoteWrapper = ({
       if (activeTimelineId) {
         addToTimeline(item, activeTimelineId);
         if (item.type === "rest") return;
-        if (Tone.context.state !== "running") await Tone.start();
-        synthRefA.current?.triggerAttackRelease(item.pitch, "8n");
-        synthRefB.current?.triggerAttackRelease(item.pitch, "8n");
+        if (!isSamplerReady) return;
+        if (Tone.getContext().state !== "running") await Tone.start();
+        samplerRef.current?.triggerAttackRelease([item.pitch], "2n");
+        setHitNote(item.pitch);
+        setTimeout(() => {
+          setHitNote(null);
+        }, 1000);
       }
     },
-    [activeTimelineId, addToTimeline, synthRefA, synthRefB],
+    [activeTimelineId, addToTimeline, isSamplerReady, samplerRef],
   );
+
+  useEffect(() => {
+    if (hitNote) {
+      setTimeout(() => {}, 500);
+    }
+  }, [hitNote]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Do not trigger shortcuts if an input field is focused
       if (
+        !isSamplerReady ||
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
         e.target instanceof HTMLSelectElement
@@ -111,7 +124,13 @@ const NoteWrapper = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activeTimelineId, handlePaletteClick, handleRemoveNote, timelines]);
+  }, [
+    activeTimelineId,
+    handlePaletteClick,
+    handleRemoveNote,
+    isSamplerReady,
+    timelines,
+  ]);
 
   const useSelisir = () => {
     setTimelines(selisirTimelines as Timeline[]);
@@ -152,13 +171,22 @@ const NoteWrapper = ({
             draggable="true"
             onDragStart={(e) => handleDragStart(e, note)}
             onClick={() => handlePaletteClick(note)}
-            className={`flex flex-col items-center py-3 min-w-24 w-fit ${NOTE_COLORS[note.type]} rounded-md`}
             style={{ height: `${100 - index * 3}%` }}
             role="button"
+            className={`flex flex-col items-center py-3 min-w-24 w-fit rounded-md
+${hitNote === note.pitch ? "bg-white border-white" : NOTE_COLORS[note.type]}
+transition-all ease-out
+`}
           >
-            <span className="font-bold text-sm md:text-base">{note.name}</span>
+            <span
+              className={`font-bold text-sm md:text-base ${hitNote === note.pitch ? "text-black" : ""}`}
+            >
+              {note.name}
+            </span>
 
-            <span className="text-xs opacity-80 hidden md:block">
+            <span
+              className={`text-xs opacity-80 hidden md:block ${hitNote === note.pitch ? "text-black" : ""}`}
+            >
               {note.type}
             </span>
           </div>
