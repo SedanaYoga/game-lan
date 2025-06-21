@@ -78,9 +78,6 @@ export default function Home() {
       },
       onerror: (error) => {
         console.error("Error loading samples:", error);
-        alert(
-          "Could not load the audio samples. Please check the file paths and make sure they are accessible in your public folder.",
-        );
       },
     }).toDestination();
 
