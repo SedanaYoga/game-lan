@@ -1,17 +1,25 @@
 import { NoteDefinition, NoteType } from "@/types/notes.type";
 
-export const SAMPLER_URLS: Record<string, string> = {
-  D4: "gangsa-pemade-ombak/pemade-ombak-ding-low.mp3",
-  E4: "gangsa-pemade-ombak/pemade-ombak-dong-low.mp3",
-  G4: "gangsa-pemade-ombak/pemade-ombak-deng-low.mp3",
-  A4: "gangsa-pemade-ombak/pemade-ombak-dung-low.mp3",
-  C5: "gangsa-pemade-ombak/pemade-ombak-dang-low.mp3",
-  D5: "gangsa-pemade-ombak/pemade-ombak-ding-high.mp3",
-  E5: "gangsa-pemade-ombak/pemade-ombak-dong-high.mp3",
-  G5: "gangsa-pemade-ombak/pemade-ombak-deng-high.mp3",
-  A5: "gangsa-pemade-ombak/pemade-ombak-dung-high.mp3",
-  C6: "gangsa-pemade-ombak/pemade-ombak-dang-high.mp3",
-};
+export const SAMPLER_URLS: Record<string, string> = Object.fromEntries(
+  Object.entries({
+    D4: "gangsa-pemade-ombak/pemade-ombak-ding-low.mp3",
+    E4: "gangsa-pemade-ombak/pemade-ombak-dong-low.mp3",
+    G4: "gangsa-pemade-ombak/pemade-ombak-deng-low.mp3",
+    A4: "gangsa-pemade-ombak/pemade-ombak-dung-low.mp3",
+    C5: "gangsa-pemade-ombak/pemade-ombak-dang-low.mp3",
+    D5: "gangsa-pemade-ombak/pemade-ombak-ding-high.mp3",
+    E5: "gangsa-pemade-ombak/pemade-ombak-dong-high.mp3",
+    G5: "gangsa-pemade-ombak/pemade-ombak-deng-high.mp3",
+    A5: "gangsa-pemade-ombak/pemade-ombak-dung-high.mp3",
+    C6: "gangsa-pemade-ombak/pemade-ombak-dang-high.mp3",
+  }).map(([key, value]) => {
+    if (process.env.CI) {
+      return [key, `game-lan/${value}`];
+    } else {
+      return [key, value];
+    }
+  }),
+);
 
 export const NOTES: NoteDefinition[] = [
   { name: "Dong", pitch: "D4", type: "low" },

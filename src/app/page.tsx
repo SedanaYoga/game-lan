@@ -71,15 +71,7 @@ export default function Home() {
   // Initialize Sampler
   useEffect(() => {
     samplerRef.current = new Tone.Sampler({
-      urls: Object.fromEntries(
-        Object.entries(SAMPLER_URLS).map(([key, value]) => {
-          if (process.env.CI) {
-            return [key, `game-lan/${value}`];
-          } else {
-            return [key, value];
-          }
-        }),
-      ),
+      urls: SAMPLER_URLS,
       onload: () => {
         setIsSamplerReady(true);
         console.log("Sampler is loaded successfully!");
