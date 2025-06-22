@@ -164,12 +164,24 @@ const TimelineWrapper = ({
   }, [isDraggingPlayhead, maxSteps, setPlayheadPosition, isPlaying]);
 
   return (
-    <section className="bg-gray-800 rounded-lg p-4 flex-grow flex flex-col overflow-hidden">
-      <div className="overflow-x-auto w-full h-full relative">
+    <section className="bg-gray-800 rounded-lg p-4 flex-grow flex flex-col overflow-hidden relative">
+      <div className="overflow-x-auto w-full h-full">
         {/* --- Ruler and Playback Head --- */}
         <div
+          className="absolute top-4 h-full w-1 bg-cyan-400 z-[30]"
+          style={{
+            left: `calc(17rem + ${playheadPosition * 2.5}rem + ${playheadPosition * 4}px)`,
+            pointerEvents: "none",
+          }}
+        >
+          <div className="relative w-full h-full">
+            <div className="absollute size-3 bg-cyan-400 rounded-r-full -top-1/2" />
+          </div>
+        </div>
+
+        <div
           ref={timelineGridRef}
-          className="sticky top-0 h-8 bg-gray-800 cursor-pointer"
+          className="sticky top-0 h-8 bg-gray-800 cursor-pointer select-none"
           style={{ zIndex: 20 }}
           onMouseDown={(e) => {
             if (isPlaying) return;
@@ -185,18 +197,6 @@ const TimelineWrapper = ({
             }
           }}
         >
-          <div
-            className="absolute top-0 h-96 w-1 bg-cyan-400"
-            style={{
-              left: `calc(16rem + ${playheadPosition * 2.5}rem + ${playheadPosition * 4}px)`,
-              pointerEvents: "none",
-            }}
-          >
-            <div className="relative w-full h-full">
-              <div className="absollute size-3 bg-cyan-400 rounded-r-full -top-1/2" />
-            </div>
-          </div>
-
           <div
             className="grid items-center gap-x-1 h-full"
             style={{
