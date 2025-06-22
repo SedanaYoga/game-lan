@@ -99,7 +99,7 @@ export default function Home() {
   }, [timelines, activeTimelineId]);
 
   useEffect(() => {
-    if (isPlaying) {
+    if (isPlaying && currentStep !== -1) {
       setPlayheadPosition(currentStep);
     }
   }, [currentStep, isPlaying]);
@@ -128,7 +128,6 @@ export default function Home() {
           setTimelines={setTimelines}
           setActiveTimelineId={setActiveTimelineId}
           playheadPosition={playheadPosition}
-          setPlayheadPosition={setPlayheadPosition}
         />
 
         <TimelineWrapper

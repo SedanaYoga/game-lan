@@ -22,7 +22,6 @@ interface ConfigWrapperProps {
   samplerRef: RefObject<Tone.Sampler | null>;
   isSamplerReady: boolean;
   playheadPosition: number;
-  setPlayheadPosition: Dispatch<SetStateAction<number>>;
 }
 
 const ConfigWrapper = ({
