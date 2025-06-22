@@ -23,6 +23,7 @@ export default function Home() {
   );
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [currentStep, setCurrentStep] = useState<number>(-1);
+  const [playheadPosition, setPlayheadPosition] = useState<number>(0);
   const [draggedItem, setDraggedItem] = useState<DraggedItem | null>(null);
 
   const samplerRef = useRef<Tone.Sampler | null>(null);
@@ -97,6 +98,12 @@ export default function Home() {
     }
   }, [timelines, activeTimelineId]);
 
+  useEffect(() => {
+    if (isPlaying) {
+      setPlayheadPosition(currentStep);
+    }
+  }, [currentStep, isPlaying]);
+
   return (
     <div className="bg-gray-900 min-h-screen text-white font-sans flex flex-col p-4 gap-4">
       <NoteWrapper
@@ -120,6 +127,8 @@ export default function Home() {
           isSamplerReady={isSamplerReady}
           setTimelines={setTimelines}
           setActiveTimelineId={setActiveTimelineId}
+          playheadPosition={playheadPosition}
+          setPlayheadPosition={setPlayheadPosition}
         />
 
         <TimelineWrapper
@@ -133,6 +142,8 @@ export default function Home() {
           isPlaying={isPlaying}
           currentStep={currentStep}
           handleRemoveNote={handleRemoveNote}
+          playheadPosition={playheadPosition}
+          setPlayheadPosition={setPlayheadPosition}
         />
       </main>
     </div>

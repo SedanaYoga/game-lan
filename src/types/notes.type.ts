@@ -24,6 +24,7 @@ export type TimelineItem = TimelineNote | Rest;
 export interface Timeline {
   id: string;
   notes: TimelineItem[];
+  isMuted?: boolean;
 }
 
 export interface DraggedItem {

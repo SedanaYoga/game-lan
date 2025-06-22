@@ -5,7 +5,7 @@ import {
   Timeline,
   TimelineNote,
 } from "@/types/notes.type";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction, useRef, useState, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
 
 interface TimelineWrapperProps {
@@ -22,6 +22,8 @@ interface TimelineWrapperProps {
   isPlaying: boolean;
   currentStep: number;
   handleRemoveNote: (timelineId: string, noteId: string) => void;
+  playheadPosition: number;
+  setPlayheadPosition: Dispatch<SetStateAction<number>>;
 }
 
 const TimelineWrapper = ({
@@ -35,8 +37,12 @@ const TimelineWrapper = ({
   isPlaying,
   currentStep,
   handleRemoveNote,
+  playheadPosition,
+  setPlayheadPosition,
 }: TimelineWrapperProps) => {
   const maxSteps = Math.max(16, ...timelines.map((tl) => tl.notes.length));
+  const timelineGridRef = useRef<HTMLDivElement>(null);
+  const [isDraggingPlayhead, setIsDraggingPlayhead] = useState(false);
 
   const handleDropOnTimeline = (e: React.DragEvent, timelineId: string) => {
     e.preventDefault();
@@ -122,15 +128,76 @@ const TimelineWrapper = ({
     });
   };
 
+  const toggleMute = (timelineId: string) => {
+    setTimelines((currentTimelines) =>
+      currentTimelines.map((tl) =>
+        tl.id === timelineId ? { ...tl, isMuted: !tl.isMuted } : tl,
+      ),
+    );
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (isDraggingPlayhead && timelineGridRef.current && !isPlaying) {
+        const rect = timelineGridRef.current.getBoundingClientRect();
+        // 16rem header (256px) + 2.75rem per step (44px)
+        const newPosition = Math.floor((e.clientX - rect.left - 256) / 48);
+
+        if (newPosition >= 0 && newPosition <= maxSteps) {
+          setPlayheadPosition(newPosition);
+        }
+      }
+    };
+    const handleMouseUp = () => {
+      setIsDraggingPlayhead(false);
+    };
+
+    if (isDraggingPlayhead) {
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingPlayhead, maxSteps, setPlayheadPosition, isPlaying]);
+
   return (
     <section className="bg-gray-800 rounded-lg p-4 flex-grow flex flex-col overflow-hidden">
       <div className="overflow-x-auto w-full h-full relative">
         {/* --- Ruler and Playback Head --- */}
-        <div className="sticky top-0 h-8 bg-gray-800" style={{ zIndex: 20 }}>
+        <div
+          ref={timelineGridRef}
+          className="sticky top-0 h-8 bg-gray-800 cursor-pointer"
+          style={{ zIndex: 20 }}
+          onMouseDown={(e) => {
+            if (isPlaying) return;
+            setIsDraggingPlayhead(true);
+            if (timelineGridRef.current) {
+              const rect = timelineGridRef.current.getBoundingClientRect();
+              const newPosition = Math.floor(
+                (e.clientX - rect.left - 256) / 48,
+              );
+              if (newPosition >= 0 && newPosition <= maxSteps) {
+                setPlayheadPosition(newPosition);
+              }
+            }
+          }}
+        >
+          <div
+            className="absolute top-0 h-full w-0.5 bg-cyan-400"
+            style={{
+              left: `calc(16rem + ${playheadPosition * 2.75}rem + ${playheadPosition * 4}px)`,
+              pointerEvents: "none",
+            }}
+          >
+            <div className="absolute -top-1 -left-1.5 w-4 h-4 bg-cyan-400 rounded-full" />
+          </div>
           <div
             className="grid items-center gap-x-1 h-full"
             style={{
-              gridTemplateColumns: `14rem repeat(${maxSteps}, 2.75rem)`,
+              gridTemplateColumns: `16rem repeat(${maxSteps}, 2.75rem)`,
             }}
           >
             <div className="sticky left-0 bg-gray-800 h-full"></div>
@@ -152,7 +219,7 @@ const TimelineWrapper = ({
               key={tl.id}
               className="grid items-center gap-x-1"
               style={{
-                gridTemplateColumns: `14rem repeat(${maxSteps}, 2.75rem)`,
+                gridTemplateColumns: `16rem repeat(${maxSteps}, 2.75rem)`,
               }}
             >
               {/* --- Timeline Header (Sticky) --- */}
@@ -174,7 +241,7 @@ const TimelineWrapper = ({
               >
                 <h3 className="font-bold">Timeline {index + 1}</h3>
 
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center shrink-0">
                   {activeTimelineId !== tl.id ? (
                     <button
                       onClick={() => setActiveTimelineId(tl.id)}
@@ -200,6 +267,16 @@ const TimelineWrapper = ({
                   >
                     Remove
                   </button>
+                  <button
+                    onClick={() => toggleMute(tl.id)}
+                    className={`px-2 py-1 text-xs rounded-md ${
+                      tl.isMuted
+                        ? "bg-yellow-800 hover:bg-yellow-700"
+                        : "bg-gray-600 hover:bg-gray-500"
+                    }`}
+                  >
+                    {tl.isMuted ? "Unmute" : "Mute"}
+                  </button>
                 </div>
               </div>
               {/* --- Notes Track --- */}
@@ -210,7 +287,7 @@ const TimelineWrapper = ({
                     key={stepIndex}
                     onDrop={(e) => item && handleDropOnNote(e, tl.id, item.id)}
                     onDragOver={handleNoteDragOver}
-                    className={`h-12 w-10 flex-shrink-0 rounded-md ${stepIndex % 4 === 0 ? "bg-gray-900/50" : ""}`}
+                    className={`h-12 flex-shrink-0 rounded-md ${stepIndex % 4 === 0 ? "bg-gray-900/50" : ""}`}
                   >
                     {item && (
                       <div

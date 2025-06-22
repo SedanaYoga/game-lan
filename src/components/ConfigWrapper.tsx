@@ -21,6 +21,8 @@ interface ConfigWrapperProps {
   setActiveTimelineId: Dispatch<SetStateAction<string | null>>;
   samplerRef: RefObject<Tone.Sampler | null>;
   isSamplerReady: boolean;
+  playheadPosition: number;
+  setPlayheadPosition: Dispatch<SetStateAction<number>>;
 }
 
 const ConfigWrapper = ({
@@ -32,6 +34,7 @@ const ConfigWrapper = ({
   setActiveTimelineId,
   samplerRef,
   isSamplerReady,
+  playheadPosition,
 }: ConfigWrapperProps) => {
   const partPlayersRef = useRef<(Tone.Part | Tone.Loop)[]>([]);
   const [tempo, setTempo] = useState<number>(120);
@@ -53,12 +56,14 @@ const ConfigWrapper = ({
     }
 
     setIsPlaying(true);
-    transport.position = 0;
+    transport.position = `0:0:${playheadPosition}`;
 
-    partPlayersRef.current = timelines.map((timeline) => {
-      const eventsWithDuration: {
-        time: string;
-        pitch: string;
+    partPlayersRef.current = timelines
+      .filter((timeline) => !timeline.isMuted)
+      .map((timeline) => {
+        const eventsWithDuration: {
+          time: string;
+          pitch: string;
         duration: number | string;
       }[] = [];
 
@@ -106,12 +111,6 @@ const ConfigWrapper = ({
           time,
         );
       }, eventsWithDuration).start(0);
-      // const events = timeline.notes
-      //   .filter((note): note is TimelineNote => note.type !== "rest")
-      //   .map((note) => [note.time, note.pitch] as [string, string]);
-      // return new Tone.Part((time, pitch) => {
-      //   samplerRef.current?.triggerAttackRelease(pitch, "2n", time);
-      // }, events).start(0);
     });
 
     const stepLoop = new Tone.Loop((time) => {
@@ -163,6 +162,7 @@ const ConfigWrapper = ({
     setIsPlaying,
     tempo,
     timelines,
+    playheadPosition,
   ]);
 
   const handleAddTimeline = () => {
