@@ -64,54 +64,54 @@ const ConfigWrapper = ({
         const eventsWithDuration: {
           time: string;
           pitch: string;
-        duration: number | string;
-      }[] = [];
+          duration: number | string;
+        }[] = [];
 
-      for (let i = 0; i < timeline.notes.length; i++) {
-        const currentItem = timeline.notes[i];
-        if (currentItem.type === "rest") {
-          continue;
-        }
-
-        // Find the next actual note to determine the duration
-        let nextNoteIndex = -1;
-        for (let j = i + 1; j < timeline.notes.length; j++) {
-          if (timeline.notes[j].type !== "rest") {
-            nextNoteIndex = j;
-            break;
+        for (let i = 0; i < timeline.notes.length; i++) {
+          const currentItem = timeline.notes[i];
+          if (currentItem.type === "rest") {
+            continue;
           }
-        }
 
-        let duration: number | string;
-        if (nextNoteIndex !== -1) {
-          const stepsBetween = nextNoteIndex - i;
-          if (tempo < 180) {
-            duration = Tone.Time("20n").toSeconds() * stepsBetween;
-          } else if (tempo >= 180) {
-            duration = Tone.Time("24n").toSeconds() * stepsBetween;
+          // Find the next actual note to determine the duration
+          let nextNoteIndex = -1;
+          for (let j = i + 1; j < timeline.notes.length; j++) {
+            if (timeline.notes[j].type !== "rest") {
+              nextNoteIndex = j;
+              break;
+            }
+          }
+
+          let duration: number | string;
+          if (nextNoteIndex !== -1) {
+            const stepsBetween = nextNoteIndex - i;
+            if (tempo < 180) {
+              duration = Tone.Time("20n").toSeconds() * stepsBetween;
+            } else if (tempo >= 180) {
+              duration = Tone.Time("24n").toSeconds() * stepsBetween;
+            } else {
+              duration = Tone.Time("48n").toSeconds() * stepsBetween;
+            }
           } else {
-            duration = Tone.Time("48n").toSeconds() * stepsBetween;
+            // Default duration for the last note in the sequence
+            duration = "8n";
           }
-        } else {
-          // Default duration for the last note in the sequence
-          duration = "8n";
+
+          eventsWithDuration.push({
+            time: currentItem.time,
+            pitch: (currentItem as TimelineNote).pitch,
+            duration,
+          });
         }
 
-        eventsWithDuration.push({
-          time: currentItem.time,
-          pitch: (currentItem as TimelineNote).pitch,
-          duration,
-        });
-      }
-
-      return new Tone.Part((time, value) => {
-        samplerRef.current?.triggerAttackRelease(
-          value.pitch,
-          value.duration,
-          time,
-        );
-      }, eventsWithDuration).start(0);
-    });
+        return new Tone.Part((time, value) => {
+          samplerRef.current?.triggerAttackRelease(
+            value.pitch,
+            value.duration,
+            time,
+          );
+        }, eventsWithDuration).start(0);
+      });
 
     const stepLoop = new Tone.Loop((time) => {
       const [bar, beat, quarter] = (transport.position as string)

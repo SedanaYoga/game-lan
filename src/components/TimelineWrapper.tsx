@@ -141,7 +141,7 @@ const TimelineWrapper = ({
       if (isDraggingPlayhead && timelineGridRef.current && !isPlaying) {
         const rect = timelineGridRef.current.getBoundingClientRect();
         // 16rem header (256px) + 2.75rem per step (44px)
-        const newPosition = Math.floor((e.clientX - rect.left - 256) / 48);
+        const newPosition = Math.floor((e.clientX - rect.left - 256) / 44);
 
         if (newPosition >= 0 && newPosition <= maxSteps) {
           setPlayheadPosition(newPosition);
@@ -177,7 +177,7 @@ const TimelineWrapper = ({
             if (timelineGridRef.current) {
               const rect = timelineGridRef.current.getBoundingClientRect();
               const newPosition = Math.floor(
-                (e.clientX - rect.left - 256) / 48,
+                (e.clientX - rect.left - 256) / 44,
               );
               if (newPosition >= 0 && newPosition <= maxSteps) {
                 setPlayheadPosition(newPosition);
@@ -186,18 +186,21 @@ const TimelineWrapper = ({
           }}
         >
           <div
-            className="absolute top-0 h-full w-0.5 bg-cyan-400"
+            className="absolute top-0 h-96 w-1 bg-cyan-400"
             style={{
-              left: `calc(16rem + ${playheadPosition * 2.75}rem + ${playheadPosition * 4}px)`,
+              left: `calc(16rem + ${playheadPosition * 2.5}rem + ${playheadPosition * 4}px)`,
               pointerEvents: "none",
             }}
           >
-            <div className="absolute -top-1 -left-1.5 w-4 h-4 bg-cyan-400 rounded-full" />
+            <div className="relative w-full h-full">
+              <div className="absollute size-3 bg-cyan-400 rounded-r-full -top-1/2" />
+            </div>
           </div>
+
           <div
             className="grid items-center gap-x-1 h-full"
             style={{
-              gridTemplateColumns: `16rem repeat(${maxSteps}, 2.75rem)`,
+              gridTemplateColumns: `16rem repeat(${maxSteps}, 2.5rem)`,
             }}
           >
             <div className="sticky left-0 bg-gray-800 h-full"></div>
@@ -219,7 +222,7 @@ const TimelineWrapper = ({
               key={tl.id}
               className="grid items-center gap-x-1"
               style={{
-                gridTemplateColumns: `16rem repeat(${maxSteps}, 2.75rem)`,
+                gridTemplateColumns: `16rem repeat(${maxSteps}, 2.5rem)`,
               }}
             >
               {/* --- Timeline Header (Sticky) --- */}
@@ -279,6 +282,7 @@ const TimelineWrapper = ({
                   </button>
                 </div>
               </div>
+
               {/* --- Notes Track --- */}
               {Array.from({ length: maxSteps }).map((_, stepIndex) => {
                 const item = tl.notes[stepIndex];
